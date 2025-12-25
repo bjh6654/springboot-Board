@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${postDTO.title} + ' - 게시판'">게시글 수정</title>
+  <style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #f5f5f5;
+        min-height: 100vh;
+    }
+
+    /* 헤더 */
+    header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px 40px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .header-left h1 {
+        font-size: 24px;
+        font-weight: 600;
+    }
+
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .header-link {
+        color: white;
+        text-decoration: none;
+        font-size: 14px;
+        opacity: 0.9;
+        transition: opacity 0.3s;
+    }
+
+    .header-link:hover {
+        opacity: 1;
+    }
+
+    /* 메인 컨테이너 */
+    .container {
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    /* 뒤로가기 링크 */
+    .breadcrumb {
+        margin-bottom: 24px;
+        font-size: 14px;
+    }
+
+    .breadcrumb a {
+        color: #667eea;
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+
+    .breadcrumb a:hover {
+        text-decoration: underline;
+    }
+
+    /* 게시글 카드 */
+    .post-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    /* 게시글 헤더 */
+    .post-header {
+        padding: 32px 0px 16px 32px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .post-title {
+        font-size: 28px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 16px;
+        line-height: 1.4;
+        width: 100%;
+        resize: none;
+        overflow: hidden !important;  /* 줄바꿈 무시 */
+        white-space: nowrap;    /* 공백 무시하고 한 줄로 */
+        max-lines: 1;           /* 줄 수 제한 (webkit) */
+        -webkit-line-clamp: 1;  /* 줄 수 제한 (webkit) */
+        display: -webkit-box;   /* line-clamp 동작 */
+    }
+
+    /* 메타정보 */
+    .post-meta {
+        display: flex;
+        gap: 32px;
+        flex-wrap: wrap;
+        padding-top: 16px;
+        border-top: 1px solid #eee;
+        font-size: 14px;
+        color: #666;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .meta-label {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .meta-value {
+        color: #666;
+    }
+
+    .meta-divider {
+        width: 1px;
+        height: 16px;
+        background: #eee;
+        margin: 0 8px;
+    }
+
+    /* 게시글 본문 */
+    .post-content {
+        padding: 32px;
+        line-height: 1.8;
+        font-size: 15px;
+        color: #333;
+        word-break: break-word;
+        white-space: pre-wrap;
+        min-height: 300px;
+        width: 100%;
+        resize: none;
+    }
+
+    /* 게시글 푸터 */
+    .post-footer {
+        padding: 24px 32px;
+        border-top: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        background: #f9f9f9;
+    }
+
+    .post-actions {
+        display: flex;
+        gap: 12px;
+    }
+
+    /* 버튼 */
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+        background: #f0f0f0;
+        color: #333;
+        border: 1px solid #ddd;
+    }
+
+    .btn-secondary:hover {
+        background: #e0e0e0;
+    }
+
+    .btn-danger {
+        background: #f8f9fa;
+        color: #dc3545;
+        border: 1px solid #dc3545;
+    }
+
+    .btn-danger:hover {
+        background: #fce8e6;
+    }
+
+    .btn-outline {
+        background: white;
+        color: #667eea;
+        border: 1px solid #667eea;
+    }
+
+    .btn-outline:hover {
+        background: #f0f0f0;
+    }
+
+    /* 게시판 링크 */
+    .back-to-board {
+        color: white;
+        text-decoration: none;
+        font-size: 14px;
+        padding: 8px 16px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        transition: all 0.3s;
+    }
+
+    .back-to-board:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    .reply-table {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+<!--            margin-bottom: 30px;-->
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    thead {
+        background: #f9f9f9;
+        border-bottom: 2px solid #ddd;
+    }
+
+    th {
+        padding: 16px;
+        text-align: left;
+        font-weight: 600;
+        color: #333;
+        font-size: 14px;
+    }
+
+    td {
+        padding: 8px;
+        border-bottom: 1px solid #eee;
+        font-size: 14px;
+        color: #555;
+    }
+
+    .reply-author {
+        text-align: center;
+        color: #999;
+    }
+
+    .reply-date {
+        text-align: center;
+        color: #999;
+    }
+    .back-to-board:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    .reply-create-card {
+        margin-top: 24px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .reply-create-header {
+        padding: 20px 32px;
+        border-bottom: 1px solid #eee;
+        background: #f9f9f9;
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .reply-form {
+        padding: 24px 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .reply-textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: inherit;
+        resize: vertical;
+        min-height: 110px;
+        transition: all 0.3s;
+    }
+
+    .reply-textarea:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12);
+    }
+
+    .reply-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+
+    /* 반응형 */
+    @media (max-width: 768px) {
+        header {
+            flex-direction: column;
+            gap: 16px;
+            padding: 16px;
+        }
+
+        .header-right {
+            width: 100%;
+            justify-content: flex-end;
+        }
+
+        .container {
+            padding: 16px;
+            margin: 20px auto;
+        }
+
+        .post-header {
+            padding: 20px;
+        }
+
+        .post-content {
+            padding: 20px;
+            min-height: auto;
+        }
+
+        .post-footer {
+            padding: 16px 20px;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .post-actions {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .post-title {
+            font-size: 22px;
+        }
+
+        .post-meta {
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .meta-divider {
+            display: none;
+        }
+    }
+  </style>
+</head>
+<body>
+<!-- 헤더 -->
+<header>
+  <div class="header-left">
+    <h1>게시판</h1>
+  </div>
+  <!--    <div class="header-right">-->
+  <!--        <a href="/board" class="back-to-board">← 목록으로 돌아가기</a>-->
+  <!--    </div>-->
+</header>
+
+<!-- 메인 컨테이너 -->
+<div class="container">
+  <!-- 브레드크럼 -->
+  <form th:action="@{/board/post/edit(postId=${postDTO.id})}"
+        th:object="${postDTO}"
+        method="post">
+    <input type="hidden" th:field="*{id}"/>
+    <input type="hidden" th:field="*{authorId}"/>
+  <div class="breadcrumb">
+    <a href="/board">게시판</a>
+    <span> / </span>
+    <span th:text="${postDTO.title}">게시글 제목</span>
+  </div>
+
+  <!-- 게시글 카드 -->
+  <div class="post-card">
+    <!-- 게시글 헤더 -->
+    <div class="post-header">
+      <h1>
+        <input id="title"
+               type="text"
+               class="post-title"
+               th:field="*{title}"
+               placeholder="제목을 입력하세요"
+               required/>
+      </h1>
+
+      <!-- 메타정보 -->
+      <div class="post-meta">
+        <div class="meta-item">
+          <span class="meta-label">작성자:</span>
+          <span class="meta-value" th:text="${postDTO.authorName}">작성자명</span>
+        </div>
+
+        <div class="meta-item">
+          <span class="meta-label">작성일:</span>
+          <span class="meta-value" th:text="${#temporals.format(postDTO.createdAt, 'yyyy-MM-dd HH:mm')}">2025-12-19 13:30</span>
+        </div>
+
+        <div class="meta-item" th:if="${postDTO.updatedAt != null && postDTO.updatedAt != postDTO.createdAt}">
+          <span class="meta-label">수정일:</span>
+          <span class="meta-value" th:text="${#temporals.format(postDTO.updatedAt, 'yyyy-MM-dd HH:mm')}">2025-12-19 14:00</span>
+        </div>
+      </div>
+    </div>
+
+
+      <textarea class="post-content"
+                th:field="*{content}"
+                rows="10"
+                required>
+      </textarea>
+
+      <!-- 게시글 푸터 -->
+      <div class="post-footer">
+        <div class="post-actions">
+          <button type="submit" class="btn btn-secondary">✏️ 저장</button>
+        </div>
+      </div>
+  </div>
+  </form>
+</div>
+</body>
+</html>
