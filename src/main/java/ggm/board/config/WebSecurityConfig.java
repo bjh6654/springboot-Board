@@ -69,8 +69,8 @@ public class WebSecurityConfig {
         });
         http
                 .oauth2Login(oauth2 -> oauth2
-                        .loginPage("/*")
-                        .defaultSuccessUrl("/home", true)
+                        .loginPage("/auth/login")
+                        .defaultSuccessUrl("/board", true)
                         .failureUrl("/login?error"))
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))

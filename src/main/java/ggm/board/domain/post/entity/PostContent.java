@@ -18,7 +18,7 @@ public class PostContent {
     private Post post;
 
     @Setter
-    @Column
+    @Column(nullable = false, length = 65535)
     private String content;
 
 }

@@ -31,6 +31,17 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "ORDER BY p.createdAt DESC")
     Page<PostDTO> findAllPostsOrderByCreatedAtDesc(Pageable pageable);
 
+    @Query("SELECT new ggm.board.domain.post.dto.PostDTO(" +
+            "p.id, p.title, pa.name, p.createdAt, COUNT(r)" +
+            ") FROM Post p " +
+            "LEFT JOIN p.replies r " +
+            "LEFT JOIN p.postContent pc " +
+            "LEFT JOIN p.postAuthor pa " +
+            "WHERE LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(pc.content) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "GROUP BY p.id, p.title, pa.name, p.createdAt " +
+            "ORDER BY p.createdAt DESC")
+    Page<PostDTO> findPostsByKeyword(@Param("keyword") String keyword, Pageable pageable);
+
 //    @Query("UPDATE ")
 //    PostDTO updateById(PostDTO postDTO);
 

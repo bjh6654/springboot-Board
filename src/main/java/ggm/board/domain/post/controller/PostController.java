@@ -31,12 +31,16 @@ public class PostController {
     private final MemberService memberService;
 
     @GetMapping("")
-    public String boardPage(Model model,
+    public String boardPage(@RequestParam(value = "keyword", defaultValue = "") String keyword,
                             @RequestParam(value = "page", defaultValue = "0") int page,
                             @RequestParam(value = "pageSize", defaultValue = "20") int pageSize,
-                            @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+                            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+                            Model model) {
         PageRequest pageRequest = PageRequest.of(page, pageSize);
-        Page<PostDTO> searchPostResult = postService.findAllPosts(pageRequest);
+        Page<PostDTO> searchPostResult = keyword.isEmpty() ?
+                postService.findAllPosts(pageRequest) :
+                postService.findPostsByKeyword(keyword, pageRequest);
+
         List<PostDTO> postList = searchPostResult.getContent();
         int totalPages = searchPostResult.getTotalPages();
 
@@ -56,7 +60,7 @@ public class PostController {
             memberDTO.setName(member.getName());
         }
         model.addAttribute("memberDTO", memberDTO);
-
+        model.addAttribute("keyword", keyword);
         return "board/index";
     }
 
@@ -65,6 +69,17 @@ public class PostController {
                           @AuthenticationPrincipal CustomUserDetails customUserDetails,
                           Model model) {
         PostDTO postDTO = postService.findByIdWithDetails(postId);
+
+        List<ReplyDTO> replies = postDTO.getReplies();
+
+        postDTO.setReplies(replies.stream().filter(r -> {
+            if (r.getParentId() == null) return true;
+            replies.stream().filter(pr -> pr.getId() == r.getParentId()).findFirst().orElseThrow().getChildren().add(r);
+            return false;
+        }).toList());
+
+        postDTO.getReplies().forEach(reply -> reply.printAll(""));
+
         model.addAttribute("postDTO", postDTO);
         model.addAttribute("replyDTO", ReplyDTO.builder().postId(postDTO.getId()).authorId(postDTO.getAuthorId()).build());
 

@@ -25,6 +25,22 @@ public class DataInitializer {
     private final Faker faker = new Faker(new Locale("ko"));
     private final BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
 
+    public void createReply(int num, Reply parent, Post post, List<Member> memberUsers, ReplyRepository replyRepository) {
+        // 댓글 생성
+        for (int r = 0; r < num; r++) {
+            Reply child = Reply.builder()
+                    .content(faker.lorem().sentence())
+                    .replyAuthor(memberUsers.get(new Random().nextInt(memberUsers.size())))
+                    .replyPost(post)
+                    .parentReply(parent)
+                    .build();
+            replyRepository.save(child);
+
+            int random = new Random().nextInt(Integer.min(num, 3));
+            createReply(random, child, post, memberUsers, replyRepository);
+        }
+    }
+
     @Bean
     public CommandLineRunner initializeData(
             MemberUserRepository memberUserRepository,
@@ -108,16 +124,20 @@ public class DataInitializer {
                     .build();
             postContents.add(postContentRepository.save(postcontent));
 
-            // 댓글 생성
-            for (int i = 0; i < 300; i++) {
+            // 댓글 작성 대댓 포함
+            for (int i = 0; i < 200; i++) {
                 Post post = posts.get(new Random().nextInt(posts.size()));
                 Reply reply = Reply.builder()
                         .content(faker.lorem().sentence())
                         .replyAuthor(memberUsers.get(new Random().nextInt(memberUsers.size())))
                         .replyPost(post)
+                        .parentReply(null)
                         .build();
                 replyRepository.save(reply);
+
+                this.createReply(new Random().nextInt(4), reply, post, memberUsers, replyRepository);
             }
+
 
             System.out.println("✓ 더미 데이터 생성 완료");
         };

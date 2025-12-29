@@ -35,6 +35,11 @@ public class PostService {
         return postRepository.findByPostAuthor(postAuthor, pageRequest);
     }
 
+    public Page<PostDTO> findPostsByKeyword(@Param("keyword") String keyword, PageRequest pageRequest) {
+        System.out.println(keyword);
+        return postRepository.findPostsByKeyword(keyword, pageRequest);
+    }
+
     public void saveReply(ReplyDTO replyDTO) {
         replyRepository.save(
                 Reply.builder()
