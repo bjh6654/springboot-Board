@@ -1,0 +1,64 @@
+<th:block xmlns:th="http://www.thymeleaf.org"
+          xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+          th:fragment="replyItem(reply, depth, memberDTO, postDTO)">
+
+    <th:block th:assert="${reply != null}"></th:block>
+
+    <tr>
+        <td colspan="4" class="reply-cell"
+            th:style="'padding-left:' + (${depth} * 20) + 'px;'
+            + 'background-color: rgba(0,0,0,' + (${#numbers.formatDecimal(depth * 0.03, 1, 2)} ) + ');'">
+
+            <div class="reply-author" th:text="${reply.authorName}"></div>
+
+<!--            <div class="reply-main">-->
+<!--                <div class="reply-content" th:text="${reply.content}"></div>-->
+
+<!--                <div sec:authorize="isAuthenticated()">-->
+<!--                    <button class="reply-delete-x"-->
+<!--                            th:attr="data-reply-id=${reply.id}"-->
+<!--                            th:if="${reply.authorId == memberDTO.id}"-->
+<!--                            th:onclick="|location.href='@{/board/post/reply/delete(replyId=${reply.id}, postId=${postDTO.id})}'|">-->
+<!--                        X-->
+<!--                    </button>-->
+<!--                </div>-->
+<!--            </div>-->
+            <div class="reply-main">
+                <div class="reply-content" th:text="${reply.content}"></div>
+
+                <div class="reply-actions">
+                    <div sec:authorize="isAuthenticated()">
+<!--                        <button class="reply-action-btn reply-delete-x"-->
+                        <button class="reply-action-btn reply-reply-btn"
+                                th:attr="data-reply-id=${reply.id}"
+                                th:if="${reply.authorId == memberDTO.id}"
+                                th:onclick="|location.href='@{/board/post/reply/delete(replyId=${reply.id}, postId=${postDTO.id})}'|">
+                            X
+                        </button>
+                    </div>
+
+                    <button class="reply-action-btn reply-reply-btn"
+                            th:attr="data-parent-reply-id=${reply.id}"
+                            onclick="openReplyForm(this)">
+                        &#8627;
+                    </button>
+                </div>
+            </div>
+
+            <div class="reply-date"
+                 th:text="${#temporals.format(reply.createdAt, 'yyyy-MM-dd HH:mm')}">
+            </div>
+
+        </td>
+    </tr>
+
+    <th:block th:each="child : ${reply.children}">
+        <tr th:replace="~{board/post/component/reply :: replyItem(
+                            reply=${child},
+                            depth=${depth+1},
+                            memberDTO=${memberDTO},
+                            postDTO=${postDTO}
+                        )}">
+        </tr>
+    </th:block>
+</th:block>

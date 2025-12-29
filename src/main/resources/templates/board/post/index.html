@@ -243,12 +243,15 @@
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             overflow: hidden;
-<!--            margin-bottom: 30px;-->
+            padding-left: 20px;
         }
 
         .reply-content {
-            white-space: pre-line;
+            padding: 10px 0px;
+            white-space: pre-wrap;
             word-wrap: break-word;
+            flex: 1;
+            min-width: 0;
         }
 
         table {
@@ -277,13 +280,12 @@
         }
 
         .reply-author {
-            text-align: center;
             color: #999;
         }
 
         .reply-date {
-            text-align: center;
             color: #999;
+            font-size: 10px;
         }
         .back-to-board:hover {
             background: rgba(255, 255, 255, 0.3);
@@ -335,6 +337,21 @@
             display: flex;
             justify-content: flex-end;
             gap: 12px;
+            align-items: center;
+            margin-left: auto;
+        }
+
+        .reply-main{
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .reply-action-btn{
+          width: 25px;       /* 두 버튼 동일 크기 */
+          height: 25px;
+          line-height: 25px;
+          padding: 0;
         }
 
         .reply-delete-x {
@@ -495,21 +512,17 @@
 
         <div class="reply-table">
             <table>
-                <tr th:each="reply, stat : ${postDTO.replies}">
-                    <td class="reply-author" th:text="${reply.authorName}"></td>
-                    <td class="reply-content"><span th:text="${reply.content}"></span></td>
-                    <td class="reply-date" th:text="${#temporals.format(reply.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
-                    <td>
-                        <div sec:authorize="isAuthenticated()">
-                            <button class="reply-delete-x"
-                                    th:attr="data-reply-id=${reply.id}"
-                                    th:if="${reply.authorId == memberDTO.id}"
-                                    th:onclick="|location.href='@{/board/post/reply/delete(replyId=${reply.id}, postId=${postDTO.id})}'|">
-                                X
-                            </button>
-                        </div>
-                    </td>
-                </tr>
+                <tbody>
+                    <th:block th:each="reply : ${postDTO.replies}">
+                        <tr th:replace="~{board/post/component/reply :: replyItem(
+                            reply=${reply},
+                            depth=0,
+                            memberDTO=${memberDTO},
+                            postDTO=${postDTO}
+                        )}">
+                        </tr>
+                    </th:block>
+                </tbody>
             </table>
         </div>
     </div>
