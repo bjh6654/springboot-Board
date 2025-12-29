@@ -71,14 +71,15 @@ public class PostController {
         PostDTO postDTO = postService.findByIdWithDetails(postId);
 
         List<ReplyDTO> replies = postDTO.getReplies();
-
-        postDTO.setReplies(replies.stream().filter(r -> {
-            if (r.getParentId() == null) return true;
-            replies.stream().filter(pr -> pr.getId() == r.getParentId()).findFirst().orElseThrow().getChildren().add(r);
+        postDTO.setReplies(replies.stream().filter(reply -> {
+            if (reply.getParentId() == null) return true; // Root reply.
+            replies.stream()
+                    .filter(parentReply -> parentReply.getId() == reply.getParentId())
+                    .findFirst().orElseThrow()
+                    .getChildren()
+                    .add(reply);
             return false;
         }).toList());
-
-        postDTO.getReplies().forEach(reply -> reply.printAll(""));
 
         model.addAttribute("postDTO", postDTO);
         model.addAttribute("replyDTO", ReplyDTO.builder().postId(postDTO.getId()).authorId(postDTO.getAuthorId()).build());

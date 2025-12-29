@@ -21,8 +21,9 @@ public class ReplyDTO {
     private long postId;
     private Long parentId;
     private List<ReplyDTO> children = new ArrayList<>();
+    private boolean deleted;
 
-    public ReplyDTO(long id, String content, long authorId, String authorName, LocalDateTime createdAt, LocalDateTime updatedAt, long postId, Long parentId) {
+    public ReplyDTO(long id, String content, long authorId, String authorName, LocalDateTime createdAt, LocalDateTime updatedAt, long postId, Long parentId, boolean deleted) {
         this.id = id;
         this.content = content;
         this.authorId = authorId;
@@ -31,6 +32,7 @@ public class ReplyDTO {
         this.updatedAt = updatedAt;
         this.postId = postId;
         this.parentId = parentId;
+        this.deleted = deleted;
     }
 
     public void printAll(String tab) {

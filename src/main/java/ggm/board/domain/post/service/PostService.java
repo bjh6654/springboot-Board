@@ -75,9 +75,15 @@ public class PostService {
         throw new AuthorizationDeniedException("You are not allowed to delete this post");
     }
 
+    @Transactional
     public void deleteReply(@Param("replyId") long replyId, CustomUserDetails customUserDetails) {
         Reply reply = replyRepository.findById(replyId).orElseThrow(EntityNotFoundException::new);
         if (reply.getReplyAuthor().getId() == customUserDetails.getId()) {
+            long count = replyRepository.countByParentReplyId(reply.getId());
+            if (count > 0) {
+                reply.setDeleted(true);
+                return;
+            }
             replyRepository.deleteById(reply.getId());
             return;
         }
