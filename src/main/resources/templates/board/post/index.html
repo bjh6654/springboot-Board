@@ -305,6 +305,7 @@
         }
 
         .reply-create-header {
+            display: flex;
             padding: 20px 32px;
             border-bottom: 1px solid #eee;
             background: #f9f9f9;
@@ -533,7 +534,20 @@
     </div>
 
     <div class="reply-create-card">
-        <div class="reply-create-header">댓글 작성</div>
+        <div class="reply-create-header">
+            <span>댓글 작성</span>
+            <span id="reply-parent-badge" class="reply-parent-badge" style="display:none; color: #999; font-weight: bold; margin-left: 20px;">
+                <span class="badge bg-secondary">
+                  <span id="reply-parent-text"></span>
+                  <button type="button" class="reply-action-btn reply-reply-btn"
+                          aria-label="부모댓글 선택 해제"
+                          onclick="clearCurrentTargetReply()">
+                      X
+                  </button>
+                </span>
+            </span>
+        </div>
+
 
         <form class="reply-form"
               action="/board/post/reply"
@@ -542,6 +556,7 @@
               onsubmit="return validateForm()">
 <!--            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">-->
             <input type="hidden" th:field="*{postId}"/>
+            <input type="hidden" th:field="*{parentId}" id="parentReplyId"/>
             <textarea class="reply-textarea"
                       name="content"
                       placeholder="댓글을 입력하세요..."
@@ -563,6 +578,36 @@
             location.href = `/board/${postId}/delete`;
         }
     }
+
+    function truncate(str, max) {
+      if (!str) return "";
+      return str.length > max ? str.slice(0, max - 1) + "…" : str; // 또는 "..."
+    }
+
+    function setCurrentTargetReply(btn) {
+      const parentId = btn.dataset.parentReplyId;
+      const parentAuthor = btn.dataset.parentAuthor;
+      const content = truncate(btn.dataset.replyContent, 20);
+
+      // hidden input 세팅
+      document.getElementById('parentReplyId').value = parentId;
+
+      // 뱃지 표시
+      document.getElementById('reply-parent-text').textContent =
+          `@${parentAuthor} [${content}]`;
+      document.getElementById('reply-parent-badge').style.display = 'block';
+
+      // 작성칸으로 포커스 이동(선택)
+      const textarea = document.querySelector('.reply-textarea');
+      if (textarea) textarea.focus();
+    }
+
+    function clearCurrentTargetReply() {
+      document.getElementById('parentReplyId').value = '';
+      document.getElementById('reply-parent-badge').style.display = 'none';
+      document.getElementById('reply-parent-text').textContent = '';
+    }
+
 </script>
 </body>
 </html>

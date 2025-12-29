@@ -44,6 +44,7 @@ public class PostService {
         replyRepository.save(
                 Reply.builder()
                         .content(replyDTO.getContent())
+                        .parentReply(replyDTO.getParentId() != null ? replyRepository.getReferenceById(replyDTO.getParentId()) : null)
                         .replyAuthor(memberUserRepository.getReferenceById(replyDTO.getAuthorId()))
                         .replyPost(postRepository.getReferenceById(replyDTO.getPostId()))
                         .build()

@@ -27,11 +27,17 @@
                         </div>
 
                         <button class="reply-action-btn reply-reply-btn"
-                                th:attr="data-parent-reply-id=${reply.id}"
-                                onclick="openReplyForm(this)">
+                                th:attr="data-parent-reply-id=${reply.id},
+                                data-parent-author=${reply.authorName},
+                                data-reply-content=${reply.content}"
+                                onclick="setCurrentTargetReply(this)">
                             &#8627;
                         </button>
                     </div>
+                </div>
+
+                <div class="reply-date"
+                     th:text="${#temporals.format(reply.createdAt, 'yyyy-MM-dd HH:mm')}">
                 </div>
             </div>
             <div th:if="${reply.deleted}">
