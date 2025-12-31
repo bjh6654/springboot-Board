@@ -102,7 +102,9 @@ public class PostService {
         throw new AuthorizationDeniedException("You are not allowed to update this post");
     }
 
+    @Transactional
     public PostDTO findByIdWithDetails(long id) {
+        postRepository.increaseView(id);
         PostDTO postDTO = postRepository.findByIdWithDetails(id);
         postDTO.setReplies(replyRepository.findByPostIdOrderByCreatedAt(id));
         return postDTO;

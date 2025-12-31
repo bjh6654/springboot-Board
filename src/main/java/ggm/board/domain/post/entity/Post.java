@@ -47,6 +47,10 @@ public class Post {
     @OneToOne(mappedBy = "post", cascade = CascadeType.ALL)
     private PostContent postContent;
 
+    @Builder.Default
+    @Column
+    private Long viewCount = 0L;
+
     public void changeContent(String newContent) {
         this.postContent.setContent(newContent);
         this.updatedAt = LocalDateTime.now();

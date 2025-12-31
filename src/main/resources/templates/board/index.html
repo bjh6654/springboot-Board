@@ -164,24 +164,28 @@
         color: #555;
     }
 
-    tbody tr:hover {
-        background: #f9f9f9;
+    tbody tr {
         transition: background 0.2s;
     }
 
-    tbody tr {
-<!--        cursor: pointer;-->
+    tbody td {
+      padding-left: 16px;
+    }
+
+    tbody tr:hover {
+        background: #e9e9e9;
         transition: background 0.2s;
     }
 
     .post-id {
-      text-align: center;
+        text-align: left;
     }
 
     .post-title {
         color: #667eea;
         font-weight: 500;
         text-decoration-line: none;
+        text-align: left;
     }
 
     .post-title:hover {
@@ -190,12 +194,12 @@
 
     .post-author {
         color: #999;
-        text-align: center;
+        text-align: left;
     }
 
     .post-date {
         color: #999;
-        text-align: center;
+        text-align: left;
     }
 
     .post-views {
@@ -416,7 +420,7 @@
         <th style="width: 50%;">제목</th>
         <th style="width: 15%;">작성자</th>
         <th style="width: 15%;">작성일</th>
-        <th style="width: 10%;">조회</th>
+        <th style="width: 10%; text-align: center;">조회</th>
       </tr>
       </thead>
       <tbody>
@@ -431,6 +435,7 @@
         </td>
         <td class="post-author" th:text="${post.authorName}"></td>
         <td class="post-date" th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+        <td class="post-views" th:text="${post.viewCount}"></td>
       </tr>
 
       <!-- 빈 상태 -->

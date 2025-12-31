@@ -22,14 +22,16 @@ public class PostDTO {
     private String authorName;
     private long replyCount;
     private List<ReplyDTO> replies;
+    private long viewCount;
 
     // To make PostList at Board Page
-    public PostDTO(long id, String title, String authorName, LocalDateTime createdAt, long replyCount) {
+    public PostDTO(long id, String title, String authorName, LocalDateTime createdAt, long replyCount, long viewCount) {
         this.id = id;
         this.title = title;
         this.authorName = authorName;
         this.createdAt = createdAt;
         this.replyCount = replyCount;
+        this.viewCount = viewCount;
     }
 
     public PostDTO(Post post) {

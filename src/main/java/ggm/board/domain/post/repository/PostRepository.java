@@ -3,10 +3,13 @@ package ggm.board.domain.post.repository;
 import ggm.board.domain.auth.entity.CustomUserDetails;
 import ggm.board.domain.post.dto.PostDTO;
 import ggm.board.domain.post.entity.Post;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -14,7 +17,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("SELECT new ggm.board.domain.post.dto.PostDTO(" +
-            "p.id, p.title, p.createdAt, p.updatedAt, pc.content, pa.id, pa.name, COUNT(r), null" +
+            "p.id, p.title, p.createdAt, p.updatedAt, pc.content, pa.id, pa.name, COUNT(r), null, p.viewCount" +
             ") FROM Post p " +
             "LEFT JOIN p.postContent pc " +
             "LEFT JOIN p.postAuthor pa " +
@@ -23,7 +26,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     PostDTO findByIdWithDetails(@Param("id") long id);
 
     @Query("SELECT new ggm.board.domain.post.dto.PostDTO(" +
-            "p.id, p.title, pa.name, p.createdAt, COUNT(r)" +
+            "p.id, p.title, pa.name, p.createdAt, COUNT(r), p.viewCount" +
             ") FROM Post p " +
             "LEFT JOIN p.replies r ON r.deleted = false " +
             "LEFT JOIN p.postAuthor pa " +
@@ -32,7 +35,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     Page<PostDTO> findAllPostsOrderByCreatedAtDesc(Pageable pageable);
 
     @Query("SELECT new ggm.board.domain.post.dto.PostDTO(" +
-            "p.id, p.title, pa.name, p.createdAt, COUNT(r)" +
+            "p.id, p.title, pa.name, p.createdAt, COUNT(r), p.viewCount" +
             ") FROM Post p " +
             "LEFT JOIN p.replies r ON r.deleted = false " +
             "LEFT JOIN p.postContent pc " +
@@ -42,9 +45,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "ORDER BY p.createdAt DESC")
     Page<PostDTO> findPostsByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
-//    @Query("UPDATE ")
-//    PostDTO updateById(PostDTO postDTO);
+    @Modifying
+    @Query("UPDATE Post p " +
+            "SET p.viewCount = p.viewCount + 1 " +
+            "WHERE p.id = :id")
+    int increaseView(@Param("id") long id);
 
     Page<Post> findByPostAuthor(@Param("postAuthor") long postAuthor, PageRequest pageRequest);
-//    Page<Post> findByKeyword(@Param("keyword") String keyword, PageRequest pageRequest);
 }
