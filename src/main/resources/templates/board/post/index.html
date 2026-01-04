@@ -509,9 +509,12 @@
         <div class="post-footer">
             <div class="post-actions">
                 <a href="/board" class="btn btn-outline">← 목록</a>
-                <div sec:authorize="isAuthenticated()">
-                    <button th:if="${postDTO.authorId == memberDTO.id}" class="btn btn-secondary" th:onclick="|location.href='@{/board/post/edit(postId=${postDTO.id})}'|">✏️ 수정</button>
-                    <button th:if="${postDTO.authorId == memberDTO.id}" class="btn btn-danger" th:onclick="|location.href='@{/board/post/delete(postId=${postDTO.id})}'|">🗑️ 삭제</button>
+                <div sec:authorize="!hasAuthority('ADMIN')" th:if="${postDTO.authorId == memberDTO.id}">
+                    <button class="btn btn-secondary" th:onclick="|location.href='@{/board/post/edit(postId=${postDTO.id})}'|">✏️ 수정</button>
+                    <button class="btn btn-danger" th:onclick="|location.href='@{/board/post/delete(postId=${postDTO.id})}'|">🗑️ 삭제</button>
+                </div>
+                <div sec:authorize="hasAuthority('ADMIN')" >
+                    <button class="btn btn-danger" th:onclick="|location.href='@{/board/post/delete(postId=${postDTO.id})}'|">🗑️ 삭제</button>
                 </div>
             </div>
         </div>

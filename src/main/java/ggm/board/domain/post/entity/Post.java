@@ -51,6 +51,10 @@ public class Post {
     @Column
     private Long viewCount = 0L;
 
+    @Setter
+    @Column(nullable = false)
+    private boolean deleted = false;
+
     public void changeContent(String newContent) {
         this.postContent.setContent(newContent);
         this.updatedAt = LocalDateTime.now();

@@ -19,6 +19,8 @@ import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class PostService {
@@ -26,6 +28,15 @@ public class PostService {
     private final ReplyRepository replyRepository;
     private final MemberUserRepository memberUserRepository;
     private final PostContentRepository postContentRepository;
+
+    public boolean isAdminOrAuthor(CustomUserDetails customUserDetails, long authorId) {
+        return customUserDetails != null &&
+                (customUserDetails.getAuthority().equals("ADMIN") || customUserDetails.getId() == authorId);
+    }
+
+    public boolean isAuthor(CustomUserDetails customUserDetails, long authorId) {
+        return customUserDetails != null && customUserDetails.getId() == authorId;
+    }
 
     public Page<PostDTO> findAllPosts(PageRequest pageRequest) {
         return postRepository.findAllPostsOrderByCreatedAtDesc(pageRequest);
@@ -36,7 +47,6 @@ public class PostService {
     }
 
     public Page<PostDTO> findPostsByKeyword(@Param("keyword") String keyword, PageRequest pageRequest) {
-        System.out.println(keyword);
         return postRepository.findPostsByKeyword(keyword, pageRequest);
     }
 
@@ -69,8 +79,8 @@ public class PostService {
 
     public void deletePost(@Param("postId") long postId, CustomUserDetails customUserDetails) {
         Post post = postRepository.findById(postId).orElseThrow(EntityNotFoundException::new);
-        if (post.getPostAuthor().getId() == customUserDetails.getId()) {
-            postRepository.deleteById(post.getId());
+        if (isAdminOrAuthor(customUserDetails, postId)) {
+            post.setDeleted(true);
             return;
         }
         throw new AuthorizationDeniedException("You are not allowed to delete this post");
@@ -79,13 +89,8 @@ public class PostService {
     @Transactional
     public void deleteReply(@Param("replyId") long replyId, CustomUserDetails customUserDetails) {
         Reply reply = replyRepository.findById(replyId).orElseThrow(EntityNotFoundException::new);
-        if (reply.getReplyAuthor().getId() == customUserDetails.getId()) {
-            long count = replyRepository.countByParentReplyId(reply.getId());
-            if (count > 0) {
-                reply.setDeleted(true);
-                return;
-            }
-            replyRepository.deleteById(reply.getId());
+        if (isAdminOrAuthor(customUserDetails, replyId)) {
+            reply.setDeleted(true);
             return;
         }
         throw new AuthorizationDeniedException("You are not allowed to delete this reply");
@@ -93,7 +98,7 @@ public class PostService {
 
     @Transactional
     public PostDTO updatePost(PostDTO postDTO, CustomUserDetails customUserDetails) {
-        if (postDTO.getAuthorId() == customUserDetails.getId()) {
+        if (isAuthor(customUserDetails, postDTO.getAuthorId())) {
             Post post = postRepository.findById(postDTO.getId()).orElseThrow(() -> new EntityNotFoundException("Post not found"));
             post.changeContent(postDTO.getContent());
             post.setTitle(postDTO.getTitle());
@@ -105,7 +110,7 @@ public class PostService {
     @Transactional
     public PostDTO findByIdWithDetails(long id) {
         postRepository.increaseView(id);
-        PostDTO postDTO = postRepository.findByIdWithDetails(id);
+        PostDTO postDTO = postRepository.findByIdWithDetails(id).orElseThrow(EntityNotFoundException::new);
         postDTO.setReplies(replyRepository.findByPostIdOrderByCreatedAt(id));
         return postDTO;
     }

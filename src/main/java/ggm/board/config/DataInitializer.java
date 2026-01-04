@@ -73,16 +73,17 @@ public class DataInitializer {
 //                        .build();
 //                memberAuths.add(memberAuthRepository.save(auth));
             }
+            // Add admin account for test.
             Member user = Member.builder()
-                    .name("박진혁")
+                    .name("관리자")
                     .build();
             memberUsers.add(memberUserRepository.save(user));
 
             auths.add(authRepository.save(Auth.builder()
                     .authMember(user)
-                    .email("admin1065@naver.com")
+                    .email("admin@naver.com")
                     .password(bCryptPasswordEncoder.encode("admin123!@#"))
-                    .role(UserRole.USER)
+                    .role(UserRole.ADMIN)
                     .build())
             );
 

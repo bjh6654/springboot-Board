@@ -16,11 +16,16 @@
                     <div class="reply-content" th:text="${reply.content}"></div>
 
                     <div class="reply-actions">
-                        <div sec:authorize="isAuthenticated()">
-    <!--                        <button class="reply-action-btn reply-delete-x"-->
+                        <div sec:authorize="!hasAuthority('ADMIN')" th:if="${postDTO.authorId == memberDTO.id}">
                             <button class="reply-action-btn reply-reply-btn"
                                     th:attr="data-reply-id=${reply.id}"
-                                    th:if="${reply.authorId == memberDTO.id}"
+                                    th:onclick="|location.href='@{/board/post/reply/delete(replyId=${reply.id}, postId=${postDTO.id})}'|">
+                                X
+                            </button>
+                        </div>
+                        <div sec:authorize="hasAuthority('ADMIN')" >
+                            <button class="reply-action-btn reply-reply-btn"
+                                    th:attr="data-reply-id=${reply.id}"
                                     th:onclick="|location.href='@{/board/post/reply/delete(replyId=${reply.id}, postId=${postDTO.id})}'|">
                                 X
                             </button>

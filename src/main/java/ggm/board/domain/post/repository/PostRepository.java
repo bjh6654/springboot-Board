@@ -14,6 +14,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("SELECT new ggm.board.domain.post.dto.PostDTO(" +
@@ -22,14 +24,16 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "LEFT JOIN p.postContent pc " +
             "LEFT JOIN p.postAuthor pa " +
             "LEFT JOIN p.replies r ON r.deleted = false " +
-            "WHERE p.id = :id")
-    PostDTO findByIdWithDetails(@Param("id") long id);
+            "WHERE p.id = :id AND p.deleted = false " +
+            "GROUP BY p.id, p.title, p.createdAt, p.updatedAt, pc.content, pa.id, pa.name, p.viewCount")
+    Optional<PostDTO> findByIdWithDetails(@Param("id") long id);
 
     @Query("SELECT new ggm.board.domain.post.dto.PostDTO(" +
             "p.id, p.title, pa.name, p.createdAt, COUNT(r), p.viewCount" +
             ") FROM Post p " +
             "LEFT JOIN p.replies r ON r.deleted = false " +
             "LEFT JOIN p.postAuthor pa " +
+            "WHERE p.deleted = false " +
             "GROUP BY p.id, p.title, pa.name, p.createdAt " +
             "ORDER BY p.createdAt DESC")
     Page<PostDTO> findAllPostsOrderByCreatedAtDesc(Pageable pageable);
@@ -40,7 +44,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "LEFT JOIN p.replies r ON r.deleted = false " +
             "LEFT JOIN p.postContent pc " +
             "LEFT JOIN p.postAuthor pa " +
-            "WHERE LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(pc.content) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "WHERE (LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(pc.content) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND p.deleted = false " +
             "GROUP BY p.id, p.title, pa.name, p.createdAt " +
             "ORDER BY p.createdAt DESC")
     Page<PostDTO> findPostsByKeyword(@Param("keyword") String keyword, Pageable pageable);

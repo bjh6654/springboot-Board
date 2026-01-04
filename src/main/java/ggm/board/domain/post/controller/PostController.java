@@ -8,9 +8,11 @@ import ggm.board.domain.post.dto.BoardDTO;
 import ggm.board.domain.post.dto.PostDTO;
 import ggm.board.domain.post.dto.ReplyDTO;
 import ggm.board.domain.post.service.PostService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -65,7 +67,7 @@ public class PostController {
     }
 
     @GetMapping("/post")
-    public String boardId(@RequestParam(value = "postId") long postId,
+    public String PostDetailPage(@RequestParam(value = "postId") long postId,
                           @AuthenticationPrincipal CustomUserDetails customUserDetails,
                           Model model) {
         PostDTO postDTO = postService.findByIdWithDetails(postId);
@@ -124,6 +126,7 @@ public class PostController {
 
     @GetMapping("/post/edit")
     public String editPostPage(@RequestParam(value = "postId") long postId,
+                               @AuthenticationPrincipal CustomUserDetails customUserDetails,
                                Model model) {
         PostDTO postDTO = postService.findByIdWithDetails(postId);
         model.addAttribute("postDTO", postDTO);

@@ -21,6 +21,10 @@ public class CustomUserDetails implements UserDetails {
         return Collections.singletonList(new SimpleGrantedAuthority(auth.getRole().toString()));
     }
 
+    public String getAuthority() {
+        return auth.getRole().toString();
+    }
+
     @Override
     public String getPassword() {
         return auth.getPassword();

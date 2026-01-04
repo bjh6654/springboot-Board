@@ -11,9 +11,5 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 @RequestMapping("/")
 public class BaseController {
-    @GetMapping("/signup")
-    public String signup(Model model) {
-        model.addAttribute("signupDTO", new SignUpDTO());
-        return "signup";
-    }
+
 }
