@@ -1,6 +1,7 @@
 package ggm.board.config;
 
 import ggm.board.domain.auth.entity.UserRole;
+import ggm.board.domain.auth.repository.RefreshRepository;
 import ggm.board.domain.auth.security.JWTFilter;
 import ggm.board.domain.auth.security.JWTUtil;
 import ggm.board.domain.auth.security.LoginFilter;
@@ -27,6 +28,7 @@ import java.util.Collections;
 public class WebSecurityConfig {
     private final AuthenticationConfiguration authenticationConfiguration;
     private final JWTUtil jwtUtil;
+    private final RefreshRepository refreshRepository;
 
     @Bean
     public AuthenticationManager authenticationManager() throws Exception {
@@ -54,7 +56,7 @@ public class WebSecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        LoginFilter loginFilter = new LoginFilter(authenticationManager(), jwtUtil);
+        LoginFilter loginFilter = new LoginFilter(authenticationManager(), jwtUtil, refreshRepository);
         loginFilter.setFilterProcessesUrl("/auth/login");
         // 로그인 성공 시 리다이렉트 설정
         loginFilter.setAuthenticationSuccessHandler((req, res, authentication) -> {
@@ -81,7 +83,7 @@ public class WebSecurityConfig {
                                 .requestMatchers("/admin").hasAnyAuthority("ADMIN")
                                 .requestMatchers("/auth/login", "/auth/loginPage", "/board/**", "/member/signup/**", "/error").permitAll()
                                 .anyRequest().authenticated())
-                .addFilterBefore(new JWTFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JWTFilter(jwtUtil, refreshRepository), UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(loginFilter, JWTFilter.class)
                 // logout. delete local cookie(access_token)
                 .logout(logout -> logout.logoutUrl("/auth/logout")

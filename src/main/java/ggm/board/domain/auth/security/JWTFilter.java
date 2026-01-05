@@ -1,14 +1,21 @@
 package ggm.board.domain.auth.security;
 
+import com.nimbusds.jwt.proc.ExpiredJWTException;
 import ggm.board.domain.auth.entity.Auth;
 import ggm.board.domain.auth.entity.CustomUserDetails;
+import ggm.board.domain.auth.entity.RefreshToken;
 import ggm.board.domain.auth.entity.UserRole;
+import ggm.board.domain.auth.repository.RefreshRepository;
+import ggm.board.domain.auth.security.jwt.TokenConstants;
+import io.jsonwebtoken.ExpiredJwtException;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,8 +26,8 @@ import java.util.Arrays;
 
 @RequiredArgsConstructor
 public class JWTFilter extends OncePerRequestFilter {
-
     private final JWTUtil jwtUtil;
+    private final RefreshRepository refreshRepository;
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -59,12 +66,51 @@ public class JWTFilter extends OncePerRequestFilter {
         String token = accessTokenCookie.getValue();
 
         try {
-            // JWT 만료 여부 검증
-            if (jwtUtil.isTokenExpired(token)) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "JWT 토큰이 만료되었습니다.");
-                return;
+            // 토큰 만료 확인. 만료 시 ExpiredJwtException 발생
+            jwtUtil.isTokenExpired(token);
+        } catch (ExpiredJwtException e) { // 토큰 만료 예외. refresh_token을 통해 토큰 재발급
+            Cookie refreshTokenCookie = Arrays.stream(cookies).filter(c -> "refresh_token".equals(c.getName())).findFirst().orElse(null);
+            if (refreshTokenCookie == null || jwtUtil.isTokenExpired(refreshTokenCookie.getValue())) {
+                throw new AuthenticationCredentialsNotFoundException("Invalid refresh token");
             }
 
+            String refresh_token = refreshTokenCookie.getValue();
+            if  (!refreshRepository.existsByToken(refresh_token)) throw new EntityNotFoundException("Invalid refresh token");
+
+            long userid = jwtUtil.getUserid(refresh_token);
+            String username = jwtUtil.getUsername(refresh_token);
+            String role = jwtUtil.getRole(refresh_token);
+
+            String new_acces_token = jwtUtil.createJwt(userid, username, role, TokenConstants.ACCESS_TOKEN_EXPIRED_TIME);
+            String new_refresh_token = jwtUtil.createJwt(userid, username, role, TokenConstants.REFRESH_TOKEN_EXPIRED_TIME);
+
+            Cookie access_cookie = new Cookie("access_token", new_acces_token);
+            access_cookie.setHttpOnly(true);
+            access_cookie.setPath("/");
+            response.addCookie(access_cookie);
+
+            Cookie refresh_cookie = new Cookie("refresh_token", new_refresh_token);
+            refresh_cookie.setHttpOnly(true);
+            refresh_cookie.setPath("/");
+            response.addCookie(refresh_cookie);
+
+            refreshRepository.save(RefreshToken.builder()
+                    .userId(userid)
+                    .username(username)
+                    .token(new_refresh_token)
+                    .expiration(jwtUtil.getExpiration(new_refresh_token))
+                    .build()
+            );
+            refreshRepository.deleteByToken(refresh_token);
+
+            token = new_acces_token;
+            System.out.println("Rotate refresh Token\n" + new_acces_token + "\n" + new_refresh_token);
+        } catch (Exception e) {
+            Cookie c = new Cookie("access_token", null);
+            c.setMaxAge(0);
+            response.addCookie(c);
+            response.sendRedirect("/board");
+        } finally {
             // JWT에서 사용자 정보 추출
             long userid = jwtUtil.getUserid(token);
             String username = jwtUtil.getUsername(token);
@@ -82,17 +128,6 @@ public class JWTFilter extends OncePerRequestFilter {
             Authentication authToken = new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
 
             SecurityContextHolder.getContext().setAuthentication(authToken);
-//////             SecurityContext에 인증 정보 저장 (STATLESS 모드이므로 요청 종료 시 소멸)
-//            if (SecurityContextHolder.getContext().getAuthentication() == null) {
-//                SecurityContextHolder.getContext().setAuthentication(authToken);
-//            }
-
-        } catch (Exception e) {
-            Cookie c = new Cookie("access_token", null);
-            c.setMaxAge(0);
-            response.addCookie(c);
-            response.sendRedirect("/board");
-//            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "유효하지 않은 토큰입니다.");
         }
 
         filterChain.doFilter(request, response);

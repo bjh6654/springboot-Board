@@ -54,6 +54,16 @@ public class JWTUtil {
                 .get("role", String.class);
     }
 
+    public String getExpiration(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .getPayload()
+                .getExpiration()
+                .toString();
+    }
+
     /**
      * JWT 만료 여부 확인
      */

@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.repository.query.Param;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,12 +31,13 @@ public class PostService {
     private final PostContentRepository postContentRepository;
 
     public boolean isAdminOrAuthor(CustomUserDetails customUserDetails, long authorId) {
-        return customUserDetails != null &&
-                (customUserDetails.getAuthority().equals("ADMIN") || customUserDetails.getId() == authorId);
+        if (customUserDetails == null) throw new AuthenticationCredentialsNotFoundException("it must be work by not anonymous user.");
+        return (customUserDetails.getAuthority().equals("ADMIN") || customUserDetails.getId() == authorId);
     }
 
     public boolean isAuthor(CustomUserDetails customUserDetails, long authorId) {
-        return customUserDetails != null && customUserDetails.getId() == authorId;
+        if (customUserDetails == null) throw new AuthenticationCredentialsNotFoundException("it must be work by not anonymous user.");
+        return customUserDetails.getId() == authorId;
     }
 
     public Page<PostDTO> findAllPosts(PageRequest pageRequest) {

@@ -1,6 +1,9 @@
 package ggm.board.domain.auth.security;
 
 import ggm.board.domain.auth.entity.CustomUserDetails;
+import ggm.board.domain.auth.entity.RefreshToken;
+import ggm.board.domain.auth.repository.RefreshRepository;
+import ggm.board.domain.auth.security.jwt.TokenConstants;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -22,6 +25,7 @@ import java.util.Iterator;
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     private final AuthenticationManager authenticationManager;
     private final JWTUtil jwtUtil;
+    private final RefreshRepository refreshRepository;
 
     /**
      * 로그인 요청 시 사용자 인증 처리
@@ -52,12 +56,26 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         GrantedAuthority authority = iterator.next();
 
         String role = authority.getAuthority();
-        String token = jwtUtil.createJwt(userid, username, role, 60 * 60 * 1000L); // 1시간 유효 토큰 생성
+        String acces_token = jwtUtil.createJwt(userid, username, role, TokenConstants.ACCESS_TOKEN_EXPIRED_TIME);
+        String refresh_token = jwtUtil.createJwt(userid, username, role, TokenConstants.REFRESH_TOKEN_EXPIRED_TIME);
 
-        Cookie cookie = new Cookie("access_token", token);
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        res.addCookie(cookie);
+        Cookie access_cookie = new Cookie("access_token", acces_token);
+        access_cookie.setHttpOnly(true);
+        access_cookie.setPath("/");
+        res.addCookie(access_cookie);
+
+        Cookie refresh_cookie = new Cookie("refresh_token", refresh_token);
+        refresh_cookie.setHttpOnly(true);
+        refresh_cookie.setPath("/");
+        res.addCookie(refresh_cookie);
+
+        refreshRepository.save(RefreshToken.builder()
+                        .userId(userid)
+                        .username(username)
+                        .token(refresh_token)
+                        .expiration(jwtUtil.getExpiration(refresh_token))
+                .build()
+        );
 
         super.successfulAuthentication(req, res, chain, auth);
 
